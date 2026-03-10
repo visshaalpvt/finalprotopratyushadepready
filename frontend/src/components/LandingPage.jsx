@@ -8,7 +8,6 @@ export default function LandingPage() {
   const handleLogin = async (role) => {
     setIsLoading(role);
     try {
-      // Save the intended role so App.jsx knows which dashboard to route to
       localStorage.setItem('userRole', role);
       await loginWithGoogle();
     } catch (err) {
@@ -19,129 +18,180 @@ export default function LandingPage() {
     }
   };
 
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#f8f9ff] text-slate-800 font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white pb-20">
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-200">
-            🎓
+      <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/20">
+              🎓
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">
+              Inclusive Classroom
+            </span>
           </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-purple-700">
-            Inclusive Classroom
-          </span>
-        </div>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-          <a href="#" className="hover:text-indigo-600 transition-colors">How it Works</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors">Features</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors">Accessibility</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors">Testimonials</a>
-        </div>
+          <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+            <button onClick={() => scrollToSection('how-it-works')} className="hover:text-indigo-400 transition-colors">How it Works</button>
+            <button onClick={() => scrollToSection('features')} className="hover:text-indigo-400 transition-colors">Features</button>
+            <button onClick={() => scrollToSection('accessibility')} className="hover:text-indigo-400 transition-colors">Accessibility</button>
+          </div>
 
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => handleLogin('student')}
-            className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors"
-          >
-            Login
-          </button>
-          <button 
-            onClick={() => handleLogin('teacher')}
-            disabled={isLoading !== ''}
-            className="px-6 py-2.5 bg-[#6338f0] hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5"
-          >
-            {isLoading === 'teacher' ? 'Loading...' : 'Get Started Free'}
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => handleLogin('student')}
+              className="hidden sm:block text-sm font-bold text-slate-300 hover:text-white transition-colors"
+            >
+              Student Login
+            </button>
+            <button 
+              onClick={() => handleLogin('teacher')}
+              disabled={isLoading !== ''}
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all hover:-translate-y-0.5"
+            >
+              {isLoading === 'teacher' ? 'Loading...' : 'Teacher Login'}
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-8 pt-20 pb-32 flex flex-col lg:flex-row items-center gap-16 relative">
-        
-        {/* Left Content */}
-        <div className="flex-1 space-y-8 z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-bold shadow-sm">
+      <section className="relative px-8 pt-24 pb-20 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[100px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px]" />
+        </div>
+
+        <div className="max-w-4xl mx-auto text-center relative z-10 space-y-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 border border-slate-700 text-indigo-300 text-xs font-bold uppercase tracking-widest shadow-lg">
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            Trusted by 5,000+ Schools Worldwide
+            Real-time Accessible Education
           </div>
 
-          <h1 className="text-6xl md:text-7xl font-black text-[#1a1c29] leading-[1.1] tracking-tight">
-            Transform Education <br />
-            Into Inclusion with <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6338f0] to-purple-500">
-              Accessible Learning
+          <h1 className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tight">
+            Education Without <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+              Barriers
             </span>
           </h1>
 
-          <p className="text-lg text-slate-500 font-medium max-w-xl leading-relaxed">
-            Inclusive Classroom AI is the premier platform connecting teachers and students with real-time translation, captions, sign language recognition, and interactive video rooms. From concept to completion — we ensure accessibility at every step.
+          <p className="text-lg text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed text-balance">
+            An AI-powered inclusive learning platform bridging the gap with real-time sign language recognition, live captions, AI summaries, and Braille exports.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
             <button 
               onClick={() => handleLogin('teacher')}
               disabled={isLoading !== ''}
-              className="w-full sm:w-auto px-8 py-4 bg-[#6338f0] hover:bg-indigo-700 text-white text-base font-bold rounded-xl shadow-xl shadow-indigo-200/50 transition-all hover:scale-105 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-base font-bold rounded-xl shadow-xl shadow-indigo-600/20 transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
-              {isLoading === 'teacher' ? 'Signing in...' : 'Sign in as Teacher'}
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              {isLoading === 'teacher' ? 'Signing in...' : 'Launch Teacher Dashboard'}
             </button>
-            
             <button 
               onClick={() => handleLogin('student')}
               disabled={isLoading !== ''}
-              className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-[#6338f0] border-2 border-[#6338f0] text-base font-bold rounded-xl shadow-lg shadow-slate-200 transition-all hover:scale-105 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-base font-bold rounded-xl shadow-lg transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
-              {isLoading === 'student' ? 'Signing in...' : 'Sign in as Student'}
+              {isLoading === 'student' ? 'Signing in...' : 'Join as Student'}
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section id="how-it-works" className="py-24 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">How It Works</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">Seamless integration of advanced AI to facilitate real-time accessible learning.</p>
+          </div>
           
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-400 pt-2 shadow-none hover:shadow-none bg-transparent">
-             <button onClick={() => window.scrollTo(0, document.body.scrollHeight)} className="hover:text-indigo-600 transition-colors shadow-none text-slate-500 hover:bg-transparent">See How It Works <span>&rsaquo;</span></button>
+          <div className="grid md:grid-cols-3 gap-8 relative">
+            {/* Connecting line for desktop */}
+            <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-indigo-500/0 via-indigo-500/50 to-indigo-500/0"></div>
+
+            <div className="relative z-10 p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4 hover:border-indigo-500/30 transition-colors">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl shadow-inner text-indigo-400">
+                1
+              </div>
+              <h3 className="text-xl font-bold text-white">Connect</h3>
+              <p className="text-slate-400 text-sm">Log in with your Google account. Teachers create live sessions, students join instantly via secure WebRTC.</p>
+            </div>
+
+            <div className="relative z-10 p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4 hover:border-purple-500/30 transition-colors">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-2xl shadow-inner text-purple-400">
+                2
+              </div>
+              <h3 className="text-xl font-bold text-white">Communicate</h3>
+              <p className="text-slate-400 text-sm">Speak normally. The platform automatically transcribes speech and detects Indian Sign Language via webcam.</p>
+            </div>
+
+            <div className="relative z-10 p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4 hover:border-blue-500/30 transition-colors">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-2xl shadow-inner text-blue-400">
+                3
+              </div>
+              <h3 className="text-xl font-bold text-white">Comprehend</h3>
+              <p className="text-slate-400 text-sm">Students receive localized translations, AI-simplified summaries, and Braille-ready exports instantly.</p>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Right Content - Floating Badges mimicking image */}
-        <div className="flex-1 relative w-full h-[500px] hidden lg:block">
-          {/* Background decoration */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-tr from-indigo-100 to-purple-50 rounded-full blur-3xl opacity-70"></div>
-          
-          {/* Badge 1 */}
-          <div className="absolute top-[15%] right-[10%] bg-white p-5 rounded-2xl shadow-2xl shadow-indigo-100 flex items-center gap-4 animate-bounce-slow" style={{ animationDuration: '4s' }}>
-            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-500 flex items-center justify-center text-xl">
-               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <div className="font-bold text-slate-700">Live Captions</div>
+      {/* Features */}
+      <section id="features" className="py-24">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Powerful Features</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">Tools designed to ensure no student is left behind.</p>
           </div>
 
-          {/* Badge 2 */}
-          <div className="absolute top-[45%] left-[5%] bg-white p-5 rounded-2xl shadow-2xl shadow-indigo-100 flex items-center gap-4 animate-bounce-slow" style={{ animationDuration: '5s', animationDelay: '1s' }}>
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl">
-               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a1 1 0 01-1-1v-3a1 1 0 011-1h1a2 2 0 100-4H4a1 1 0 01-1-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
-            </div>
-            <div className="font-bold text-slate-700">AI Explanations</div>
-          </div>
-
-          {/* Badge 3 */}
-          <div className="absolute bottom-[20%] right-[15%] bg-white p-5 rounded-2xl shadow-2xl shadow-indigo-100 flex items-center gap-4 animate-bounce-slow" style={{ animationDuration: '4.5s', animationDelay: '0.5s' }}>
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">
-               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
-            <div className="font-bold text-slate-700">Real-time Sign Language</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { title: "Live Transcription", desc: "Real-time speech-to-text converts the teacher's voice into highly accurate live captions.", icon: "🎙️" },
+              { title: "ISL Recognition", desc: "MediaPipe AI tracks hand gestures to detect Indian Sign Language locally in the browser.", icon: "🖐️" },
+              { title: "Tribal Translations", desc: "Ollama-powered automatic translations to Santhali, Gondi, Tamil, and more.", icon: "🌐" },
+              { title: "AI Assistant", desc: "Llama3 generates simplified lecture summaries, key takeaways, and answers questions.", icon: "🤖" },
+              { title: "Braille Export", desc: "Instantly convert text and summaries into Braille-encoded PDF documents for physical printing.", icon: "📄" },
+              { title: "Gamification", desc: "XP system and activity tracking keeps students engaged and motivated during lessons.", icon: "🎮" }
+            ].map((f, i) => (
+              <div key={i} className="p-6 rounded-2xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 transition-all hover:shadow-lg hover:shadow-indigo-500/5 group">
+                <div className="w-12 h-12 rounded-xl bg-slate-800 text-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  {f.icon}
+                </div>
+                <h3 className="text-lg font-bold text-slate-200 mb-2">{f.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </main>
+      </section>
 
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
-        }
-        .animate-bounce-slow {
-          animation: bounce-slow infinite;
-        }
-      `}} />
+      {/* Accessibility */}
+      <section id="accessibility" className="py-24 bg-gradient-to-b from-slate-950 to-indigo-950/20">
+        <div className="max-w-5xl mx-auto px-8 text-center space-y-8">
+          <div className="w-16 h-16 mx-auto rounded-3xl bg-indigo-500/20 flex items-center justify-center text-3xl mb-4">
+            🌟
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">Built for Everyone.</h2>
+          <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+            Every component of this visual infrastructure was designed to prioritize accessibility. From high-contrast dark modes to native screen-reader support, the interface stays completely out of the way so learning takes center stage.
+          </p>
+          <button 
+            onClick={() => handleLogin('student')}
+            className="mt-8 px-8 py-4 bg-white text-indigo-950 text-base font-bold rounded-xl shadow-xl hover:bg-slate-100 transition-all hover:scale-105"
+          >
+            Experience It Now
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
