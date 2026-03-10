@@ -47,16 +47,8 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
 
     socket.on('join-response-result', ({ status }) => {
       if (status === 'accepted') {
-        // As a participant, we join and send our stream so we appear in the grid
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-          .then(stream => {
-            setLocalStream(stream);
-            socket.emit('join-video-room', { roomId, isTeacher });
-          })
-          .catch(err => {
-            console.error("Failed to get local stream", err);
-            alert("Could not access camera/microphone.");
-          });
+        // Students do NOT broadcast video by default, they just join the WebRTC mesh to receive
+        socket.emit('join-video-room', { roomId, isTeacher });
       } else {
         alert('Your request to join was declined by the teacher.');
         window.location.href = '/student'; // Kick back to dashboard

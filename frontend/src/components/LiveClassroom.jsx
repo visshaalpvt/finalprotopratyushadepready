@@ -163,7 +163,7 @@ export default function LiveClassroom() {
   const students = amITeacher ? remotePeers : remotePeers.filter(p => !p.isTeacher);
 
   // 1.5 WAITING ROOM (Student waiting for approval AFTER lobby)
-  if (!amITeacher && isWaiting && localStream === null) {
+  if (!amITeacher && isWaiting && remotePeers.length === 0 && !mainStream) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-slate-900 border-x border-slate-800 text-white p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-mesh opacity-20 pointer-events-none mix-blend-screen" />
@@ -246,22 +246,28 @@ export default function LiveClassroom() {
           </div>
 
           {/* Student Grid (If any) */}
-          {students.length > 0 || !amITeacher ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {/* If I am a student, show myself here */}
-              {!amITeacher && localStream && (
-                <div className="aspect-video relative rounded-2xl overflow-hidden shadow-xl border border-slate-700">
-                  <VideoRenderer stream={localStream} isLocal={true} isTeacher={false} name={`${userName} (You)`} />
-                </div>
-              )}
-              {/* Show other students */}
-              {students.map((peer, i) => (
-                <div key={i} className="aspect-video relative rounded-2xl overflow-hidden shadow-xl border border-slate-700">
-                  <VideoRenderer stream={peer.stream} isLocal={false} isTeacher={false} name={peer.name} />
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {/* If I am a student, show my placeholder here */}
+            {!amITeacher && (
+              <div className="aspect-video relative rounded-2xl overflow-hidden shadow-xl border border-slate-700 bg-slate-800 flex flex-col items-center justify-center">
+                <div className="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-xl shadow-lg mb-2">🎓</div>
+                <span className="text-white font-bold text-sm">{userName} (You)</span>
+              </div>
+            )}
+            {/* Show other students */}
+            {students.map((peer, i) => (
+              <div key={i} className="aspect-video relative rounded-2xl overflow-hidden shadow-xl border border-slate-700 bg-slate-800 flex flex-col items-center justify-center">
+                {peer.stream ? (
+                   <VideoRenderer stream={peer.stream} isLocal={false} isTeacher={false} name={peer.name} />
+                ) : (
+                  <>
+                    <div className="w-12 h-12 bg-slate-600 rounded-full flex items-center justify-center text-xl shadow-lg mb-2">🎓</div>
+                    <span className="text-white font-bold text-sm tracking-wide">{peer.name}</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
 
           {/* ⚡ Live Caption Panel Overflow */}
           {showCaptions && transcript.length > 0 && (
