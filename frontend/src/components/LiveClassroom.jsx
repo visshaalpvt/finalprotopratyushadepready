@@ -43,7 +43,7 @@ export default function LiveClassroom() {
     });
 
     // Listen for join requests (teacher sees these)
-    socket.on('join-request', ({ studentId, userName: reqName }) => {
+    socket.on('join-request-received', ({ studentId, userName: reqName }) => {
       setJoinRequests(prev => {
         if (prev.find(r => r.studentId === studentId)) return prev;
         return [...prev, { studentId, userName: reqName }];
@@ -61,7 +61,7 @@ export default function LiveClassroom() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
-    
+
     if (roomParam) {
       setRoomId(roomParam);
     } else if (role === 'teacher' && !roomId) {
@@ -79,13 +79,13 @@ export default function LiveClassroom() {
 
   const handleAcceptRequest = (studentId) => {
     if (!socket) return;
-    socket.emit('join-response', { studentId, roomId, status: 'accepted' });
+    socket.emit('approve-user', { studentSocketId: studentId, roomId });
     setJoinRequests(prev => prev.filter(r => r.studentId !== studentId));
   };
 
   const handleDeclineRequest = (studentId) => {
     if (!socket) return;
-    socket.emit('join-response', { studentId, roomId, status: 'declined' });
+    socket.emit('reject-user', { studentSocketId: studentId, roomId });
     setJoinRequests(prev => prev.filter(r => r.studentId !== studentId));
   };
 
@@ -110,7 +110,7 @@ export default function LiveClassroom() {
                   <p className="text-4xl font-mono font-black text-white">{roomId || '...'}</p>
                   <p className="text-[10px] text-slate-500 mt-3 font-medium uppercase tracking-tighter">Share this code with your students</p>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Your Display Name</label>
@@ -215,7 +215,7 @@ export default function LiveClassroom() {
               >
                 {inviteCopied ? '✅ Copied!' : '🔗 Copy Invite'}
               </button>
-              
+
               {/* Join Requests Dropdown */}
               {joinRequests.length > 0 && (
                 <div className="absolute top-full left-0 mt-3 w-72 bg-slate-800 border border-indigo-500/50 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-3 z-50">
@@ -279,7 +279,7 @@ export default function LiveClassroom() {
             {students.map((peer, i) => (
               <div key={i} className="aspect-video relative rounded-2xl overflow-hidden shadow-xl border border-slate-700 bg-slate-800 flex flex-col items-center justify-center">
                 {peer.stream ? (
-                   <VideoRenderer stream={peer.stream} isLocal={false} isTeacher={false} name={peer.name} />
+                  <VideoRenderer stream={peer.stream} isLocal={false} isTeacher={false} name={peer.name} />
                 ) : (
                   <>
                     <div className="w-12 h-12 bg-slate-600 rounded-full flex items-center justify-center text-xl shadow-lg mb-2">🎓</div>

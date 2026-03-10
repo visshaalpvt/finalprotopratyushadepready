@@ -23,6 +23,9 @@ const io = new Server(server, {
   },
 });
 
+/* Persistent room state for WebRTC */
+const videoRooms = {};
+
 const PORT = process.env.PORT || 3001;
 
 /* ---- Middleware ---- */
@@ -108,6 +111,19 @@ io.on('connection', (socket) => {
   socket.on('join-video-room', ({ roomId, isTeacher }) => {
     socket.join(roomId);
     console.log(`[Video] ${isTeacher ? 'Teacher' : 'Student'} ${socket.id} joined room ${roomId}`);
+    
+    if (!videoRooms[roomId]) {
+      videoRooms[roomId] = { host: null, participants: [], waiting: [] };
+    }
+
+    if (isTeacher) {
+      videoRooms[roomId].host = socket.id;
+    } else {
+      if (!videoRooms[roomId].participants.includes(socket.id)) {
+        videoRooms[roomId].participants.push(socket.id);
+      }
+    }
+
     // Notify others in room
     socket.to(roomId).emit('user-connected', {
       userId: socket.id,
@@ -115,41 +131,69 @@ io.on('connection', (socket) => {
       name: socket.data?.name || (isTeacher ? 'Teacher' : 'Student')
     });
 
-    // Send room users' info to the new user so they can initiate connections
-    const clients = io.sockets.adapter.rooms.get(roomId);
+    // Send updated user list to joining user
     const usersInRoom = [];
+    const clients = io.sockets.adapter.rooms.get(roomId);
     if (clients) {
-        for (const clientId of clients) {
-            const clientSocket = io.sockets.sockets.get(clientId);
-            if (clientSocket) {
-                usersInRoom.push({
-                    userId: clientId,
-                    isTeacher: clientSocket.data?.role === 'admin',
-                    name: clientSocket.data?.name || (clientSocket.id === socket.id ? userName : 'User')
-                });
-            }
+      for (const clientId of clients) {
+        const clientSocket = io.sockets.sockets.get(clientId);
+        if (clientSocket) {
+          usersInRoom.push({
+            userId: clientId,
+            isTeacher: clientSocket.data?.role === 'admin',
+            name: clientSocket.data?.name || 'User'
+          });
         }
+      }
     }
     socket.emit('room-users', usersInRoom);
   });
 
-  socket.on('request-join-room', ({ roomId, userName }) => {
-    socket.join(`waiting-${roomId}`);
-    // Send request to the teacher in the main roomId
-    io.to(roomId).emit('join-request', {
-      studentId: socket.id,
-      userName
-    });
+  socket.on('join-request', ({ roomId, studentName }) => {
+    if (!videoRooms[roomId]) {
+      videoRooms[roomId] = { host: null, participants: [], waiting: [] };
+    }
+    
+    // Add to waiting list
+    if (!videoRooms[roomId].waiting.find(w => w.socketId === socket.id)) {
+      videoRooms[roomId].waiting.push({ socketId: socket.id, name: studentName });
+    }
+
+    console.log(`[Wait] Student ${studentName} requesting room ${roomId}`);
+
+    // If there is a host, notify them
+    if (videoRooms[roomId].host) {
+      io.to(videoRooms[roomId].host).emit('join-request-received', {
+        studentId: socket.id,
+        userName: studentName
+      });
+    } else {
+       // Also broadcast to the room generic if host hasn't explicitly registered yet
+       socket.to(roomId).emit('join-request-received', {
+         studentId: socket.id,
+         userName: studentName
+       });
+    }
   });
 
-  socket.on('join-response', ({ studentId, roomId, status }) => {
-    io.to(studentId).emit('join-response-result', { status, roomId });
-    if (status === 'accepted') {
-      // The student will proceed to emit 'join-video-room'
-    } else {
-      // Clean up the waiting room
-      const studentSocket = io.sockets.sockets.get(studentId);
-      if (studentSocket) studentSocket.leave(`waiting-${roomId}`);
+  socket.on('approve-user', ({ roomId, studentSocketId }) => {
+    if (videoRooms[roomId]) {
+      // Move from waiting to participants
+      videoRooms[roomId].waiting = videoRooms[roomId].waiting.filter(w => w.socketId !== studentSocketId);
+      if (!videoRooms[roomId].participants.includes(studentSocketId)) {
+        videoRooms[roomId].participants.push(studentSocketId);
+      }
+
+      // Notify the student directly
+      console.log(`[Approve] Approving student ${studentSocketId} for room ${roomId}`);
+      io.to(studentSocketId).emit('join-approved', { roomId });
+    }
+  });
+
+  socket.on('reject-user', ({ roomId, studentSocketId }) => {
+    if (videoRooms[roomId]) {
+      videoRooms[roomId].waiting = videoRooms[roomId].waiting.filter(w => w.socketId !== studentSocketId);
+      io.to(studentSocketId).emit('join-rejected', { roomId });
     }
   });
 
@@ -272,6 +316,12 @@ io.on('connection', (socket) => {
     for (const room of socket.rooms) {
       if (room !== socket.id) {
         socket.to(room).emit('user-disconnected', socket.id);
+      }
+      // Cleanup videoRooms
+      if (videoRooms[room]) {
+        videoRooms[room].participants = videoRooms[room].participants.filter(id => id !== socket.id);
+        videoRooms[room].waiting = videoRooms[room].waiting.filter(w => w.socketId !== socket.id);
+        if (videoRooms[room].host === socket.id) videoRooms[room].host = null;
       }
     }
   });

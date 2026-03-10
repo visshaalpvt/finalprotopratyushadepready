@@ -41,18 +41,18 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
       } else {
         // Student requests to join and waits in waiting room
         socket.data = { name: userName, role: 'student' };
-        socket.emit('request-join-room', { roomId, userName });
+        socket.emit('join-request', { roomId, studentName: userName });
       }
     });
 
-    socket.on('join-response-result', ({ status }) => {
-      if (status === 'accepted') {
-        // Students do NOT broadcast video by default, they just join the WebRTC mesh to receive
-        socket.emit('join-video-room', { roomId, isTeacher });
-      } else {
-        alert('Your request to join was declined by the teacher.');
-        window.location.href = '/student'; // Kick back to dashboard
-      }
+    socket.on('join-approved', ({ roomId: approvedRoomId }) => {
+      console.log(`[Approve] Joined room ${approvedRoomId}`);
+      socket.emit('join-video-room', { roomId: approvedRoomId, isTeacher: false });
+    });
+
+    socket.on('join-rejected', () => {
+      alert('Your request to join was declined by the teacher.');
+      window.location.href = '/student'; 
     });
 
     socket.on('user-connected', ({ userId, isTeacher: peerIsTeacher, name: peerName }) => {
