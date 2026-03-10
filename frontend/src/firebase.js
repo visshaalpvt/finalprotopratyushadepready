@@ -9,12 +9,12 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAxE2IXhowciyE4udO0fXfylNWGSnBq_Kk",
-  authDomain: "inclusive-classroom-ea3ce.web.app",
-  projectId: "inclusive-classroom-ea3ce",
-  storageBucket: "inclusive-classroom-ea3ce.firebasestorage.app",
-  messagingSenderId: "247352475782",
-  appId: "1:247352475782:web:d8745bd6d8758224829107"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
