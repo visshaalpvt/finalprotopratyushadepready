@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 
 export default function LandingPage() {
-  const { loginWithGoogle } = useAuth();
+  const { loginWithMock } = useAuth();
   const [isLoading, setIsLoading] = useState(''); // 'teacher' or 'student'
 
   const handleLogin = async (role) => {
     setIsLoading(role);
     try {
-      localStorage.setItem('userRole', role);
-      await loginWithGoogle();
+      await loginWithMock(role);
     } catch (err) {
       console.error(err);
       alert('Login failed. Please try again.');

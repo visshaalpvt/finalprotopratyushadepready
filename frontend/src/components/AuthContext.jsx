@@ -1,15 +1,4 @@
-/**
- * AuthContext.jsx
- * Provides Firebase auth state to the entire app.
- * Wrap your <App /> with <AuthProvider> in main.jsx.
- */
 import { createContext, useContext, useState, useEffect } from 'react';
-import { auth, googleProvider } from '../firebase';
-import {
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-} from 'firebase/auth';
 
 const AuthContext = createContext(null);
 
@@ -17,39 +6,39 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen for auth state changes (auto-login if session exists)
+  // Fake auth that just checks localStorage to bypass blocked Firebase URL
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    const savedRole = localStorage.getItem('userRole');
+    if (savedRole) {
+      setUser({
+        displayName: savedRole === 'teacher' ? 'Teacher Admin' : 'Student User',
+        photoURL: `https://ui-avatars.com/api/?name=${savedRole === 'teacher' ? 'Teacher' : 'Student'}&background=6338f0&color=fff`,
+        role: savedRole
+      });
+    }
+    setLoading(false);
   }, []);
 
-  // Google Sign-In
-  const loginWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      return result.user;
-    } catch (error) {
-      console.error('Google Sign-In Error:', error);
-      throw error;
-    }
+  // Mock Login
+  const loginWithMock = async (role) => {
+    localStorage.setItem('userRole', role);
+    setUser({
+      displayName: role === 'teacher' ? 'Teacher Admin' : 'Student User',
+      photoURL: `https://ui-avatars.com/api/?name=${role === 'teacher' ? 'Teacher' : 'Student'}&background=6338f0&color=fff`,
+      role: role
+    });
   };
 
   // Sign Out
   const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error('Logout Error:', error);
-    }
+    localStorage.removeItem('userRole');
+    setUser(null);
   };
 
   const value = {
     user,
     loading,
-    loginWithGoogle,
+    loginWithMock,
     logout,
   };
 
