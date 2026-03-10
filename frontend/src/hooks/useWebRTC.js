@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
@@ -8,12 +8,14 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
   const [remotePeers, setRemotePeers] = useState([]);
   const socketRef = useRef(null);
   const peersRef = useRef({});
+  const iceCandidateQueue = useRef({});
 
   // ICE Servers for STUN
   const iceServers = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' }
     ]
   };
 
@@ -25,7 +27,7 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
 
     socket.on('connect', () => {
       if (isTeacher) {
-        // Teacher joins immediately
+        // Teacher joins immediately and broadcasts
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
           .then(stream => {
             setLocalStream(stream);
@@ -45,6 +47,7 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
 
     socket.on('join-response-result', ({ status }) => {
       if (status === 'accepted') {
+        // As a participant, we join and send our stream so we appear in the grid
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
           .then(stream => {
             setLocalStream(stream);
@@ -72,6 +75,18 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
       socket.emit('webrtc-answer', { target: data.callerId, answer });
+
+      // Process any queued ICE candidates that arrived before remote description was set
+      if (iceCandidateQueue.current[data.callerId]) {
+        for (const candidate of iceCandidateQueue.current[data.callerId]) {
+          try {
+            await peer.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            console.error("Error adding queued ice candidate", e);
+          }
+        }
+        iceCandidateQueue.current[data.callerId] = [];
+      }
     });
 
     socket.on('webrtc-answer', async (data) => {
@@ -79,18 +94,45 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
       const peer = peersRef.current[data.replierId]?.pc;
       if (peer) {
         await peer.setRemoteDescription(new RTCSessionDescription(data.answer));
+        
+        // Process queued candidates
+        if (iceCandidateQueue.current[data.replierId]) {
+          for (const candidate of iceCandidateQueue.current[data.replierId]) {
+            try {
+              await peer.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (e) {
+              console.error("Error adding queued ice candidate", e);
+            }
+          }
+          iceCandidateQueue.current[data.replierId] = [];
+        }
       }
     });
 
     socket.on('webrtc-ice-candidate', async (data) => {
-      const peer = peersRef.current[data.senderId]?.pc;
-      if (peer) {
+      const peerData = peersRef.current[data.senderId];
+      if (peerData && peerData.pc.remoteDescription) {
         try {
-          await peer.addIceCandidate(new RTCIceCandidate(data.candidate));
+          await peerData.pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         } catch (e) {
           console.error("Error adding ice candidate", e);
         }
+      } else {
+        // Queue it because RTCPeerConnection isn't ready or doesn't have remote description yet
+        if (!iceCandidateQueue.current[data.senderId]) {
+          iceCandidateQueue.current[data.senderId] = [];
+        }
+        iceCandidateQueue.current[data.senderId].push(data.candidate);
       }
+    });
+    
+    // Handle user leaving
+    socket.on('user-disconnected', (userId) => {
+       setRemotePeers(prev => prev.filter(p => p.peerId !== userId));
+       if (peersRef.current[userId]) {
+           peersRef.current[userId].pc.close();
+           delete peersRef.current[userId];
+       }
     });
 
     return () => {
@@ -99,13 +141,17 @@ export function useWebRTC(roomId, isTeacher, userName, isJoined) {
         localStream.getTracks().forEach(track => track.stop());
       }
       Object.values(peersRef.current).forEach(p => p.pc.close());
+      peersRef.current = {};
     };
   }, [isJoined, roomId, isTeacher, userName]);
 
   const createPeer = (peerId, isInitiator, peerIsTeacher, peerName) => {
+    // If peer connection already exists, just return it
+    if (peersRef.current[peerId]) return peersRef.current[peerId].pc;
+
     const peer = new RTCPeerConnection(iceServers);
 
-    // Add our local stream to the peer connection
+    // Add our local stream to the peer connection so others can see us
     if (localStream) {
       localStream.getTracks().forEach(track => {
         peer.addTrack(track, localStream);

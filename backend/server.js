@@ -251,6 +251,14 @@ io.on('connection', (socket) => {
 
   /* ---- Disconnect ---- */
 
+  socket.on('disconnecting', () => {
+    for (const room of socket.rooms) {
+      if (room !== socket.id) {
+        socket.to(room).emit('user-disconnected', socket.id);
+      }
+    }
+  });
+
   socket.on('disconnect', () => {
     if (socket.data?.role === 'student') {
       sessionManager.removeStudent(socket.id);
