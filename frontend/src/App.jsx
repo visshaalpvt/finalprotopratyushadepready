@@ -3,10 +3,10 @@
  * Root component with React Router for Admin and Student dashboards.
  * Now includes Firebase Google Auth — shows LoginPage if not logged in.
  */
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from './components/AuthContext';
-import LoginPage from './components/LoginPage';
+import LandingPage from './components/LandingPage';
 import AdminDashboard from './components/AdminDashboard';
 import StudentDashboard from './components/StudentDashboard';
 import LiveClassroom from './components/LiveClassroom';
@@ -39,7 +39,7 @@ function Header({ darkMode, setDarkMode }) {
           {/* Tab Navigation */}
           <nav className="flex items-center gap-1 sm:gap-2">
             <Link
-              to="/"
+              to="/admin"
               className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isAdmin
                   ? 'bg-white/20 text-white shadow-inner'
@@ -51,7 +51,7 @@ function Header({ darkMode, setDarkMode }) {
             <Link
               to="/student"
               className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                !isAdmin
+                !isAdmin && location.pathname !== '/classroom'
                   ? 'bg-white/20 text-white shadow-inner'
                   : 'text-brand-200 hover:bg-white/10 hover:text-white'
               }`}
@@ -138,10 +138,13 @@ export default function App() {
     );
   }
 
-  // If not logged in, show login page
+  // If not logged in, show landing page
   if (!user) {
-    return <LoginPage />;
+    return <LandingPage />;
   }
+
+  const userRole = localStorage.getItem('userRole') || 'student';
+  const defaultPath = userRole === 'teacher' ? '/admin' : '/student';
 
   // Logged in — show the full app
   return (
@@ -150,7 +153,7 @@ export default function App() {
         <Header darkMode={darkMode} setDarkMode={setDarkMode} />
         <main className="bg-mesh min-h-[calc(100vh-4rem)]">
           <Routes>
-            <Route path="/" element={<AdminDashboard />} />
+            <Route path="/" element={<Navigate to={defaultPath} replace />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/student" element={<StudentDashboard />} />
             <Route path="/classroom" element={<LiveClassroom />} />
